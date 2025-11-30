@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PodTutor - Interactive Podcast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .upload-zone:hover { border-color: #764ba2; background: #f8f9fa; }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+        }
+
+        .status-card.active { display: block; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .player-section {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            display: none;
+        }
+
+        .player-section.active { display: block; }
+
+        .player-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .audio-player {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .current-speaker {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* QUESTION BOX - NOW VISIBLE */
+        .question-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            border: 3px solid #28a745;
+        }
+
+        .question-box h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .question-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .question-input:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+
+        .ask-btn {
+            width: 100%;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .ask-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40,167,69,0.3);
+        }
+
+        .answer-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #d4edda;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            display: none;
+        }
+
+        .answer-container.active { display: block; }
+
+        .play-answer-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 15px;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .transcript-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .transcript-item {
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .transcript-item.student { border-left-color: #764ba2; }
+        .transcript-item.question { border-left-color: #28a745; background: #d4edda; }
+
+        .speaker {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .transcript-item.student .speaker { color: #764ba2; }
+        .transcript-item.question .speaker { color: #28a745; }
+
+        @media (max-width: 768px) {
+            .main-content, .player-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ PodTutor</h1>
+            <p>Interactive AI Podcast Generator - Ask Questions Anytime!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2>📤 Upload PDF</h2>
+                <div class="upload-zone" id="uploadZone">
+                    <div style="font-size: 4em; margin-bottom: 20px;">📄</div>
+                    <p style="font-size: 1.2em; margin-bottom: 10px;">Drop PDF here or click</p>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                </div>
+                <div id="fileName" style="margin-top: 15px; display: none;"></div>
+                <button class="btn" id="uploadBtn" style="display: none;">Generate Podcast ✨</button>
+            </div>
+
+            <div class="status-section">
+                <h2>📊 Status</h2>
+                <div class="status-card" id="statusCard">
+                    <p id="statusText">Waiting for PDF...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-section" id="playerSection">
+                <h2>🎧 Your Interactive Podcast</h2>
+
+                <div class="player-grid">
+                    <div class="audio-player">
+                        <div class="current-speaker" id="currentSpeaker">🎙️ Loading...</div>
+                        <audio id="audioPlayer" controls style="width: 100%;"></audio>
+                    </div>
+
+                    <div class="question-box">
+                        <h3>💬 Ask Question</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Pause and ask anything!</p>
+                        <textarea id="questionInput" class="question-input" placeholder="e.g., Can you explain this more simply?"></textarea>
+                        <button class="ask-btn" id="askBtn">🎤 Ask Question</button>
+
+                        <div class="answer-container" id="answerContainer">
+                            <strong style="color: #28a745; font-size: 1.1em;">📝 Answer:</strong>
+                            <div id="answerText" style="margin: 15px 0; line-height: 1.6;"></div>
+                            <button class="play-answer-btn" id="playAnswerBtn">▶️ Play Answer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-section">
+                    <h3>📝 Transcript</h3>
+                    <div id="transcript"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const API = 'http://localhost:8000/api/episodes';
+    let episodeId = null;
+    let manifest = [];
+    let currentIndex = 0;
+    let answerAudio = null;
+    let isPlayingAnswer = false;
+
+    const el = {
+        uploadZone: document.getElementById('uploadZone'),
+        fileInput: document.getElementById('fileInput'),
+        uploadBtn: document.getElementById('uploadBtn'),
+        fileName: document.getElementById('fileName'),
+        statusCard: document.getElementById('statusCard'),
+        statusText: document.getElementById('statusText'),
+        progressBar: document.getElementById('progressBar'),
+        playerSection: document.getElementById('playerSection'),
+        audioPlayer: document.getElementById('audioPlayer'),
+        currentSpeaker: document.getElementById('currentSpeaker'),
+        transcript: document.getElementById('transcript'),
+        questionInput: document.getElementById('questionInput'),
+        askBtn: document.getElementById('askBtn'),
+        answerContainer: document.getElementById('answerContainer'),
+        answerText: document.getElementById('answerText'),
+        playAnswerBtn: document.getElementById('playAnswerBtn')
+    };
+
+    el.uploadZone.onclick = () => el.fileInput.click();
+
+    el.fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            el.fileName.textContent = `📄 ${file.name}`;
+            el.fileName.style.display = 'block';
+            el.uploadBtn.style.display = 'block';
+        }
+    };
+
+    el.uploadBtn.onclick = async () => {
+        const file = el.fileInput.files[0];
+        if (!file) return;
+
+        el.statusCard.classList.add('active');
+        el.uploadBtn.disabled = true;
+        el.statusText.textContent = '⏳ Uploading...';
+        el.progressBar.style.width = '10%';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch(`${API}/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            episodeId = data.episode_id;
+            el.statusText.textContent = '🎙️ Generating with GenAI...';
+            el.progressBar.style.width = '30%';
+            checkStatus();
+        } catch (error) {
+            el.statusText.textContent = '❌ Error: ' + error.message;
+            el.uploadBtn.disabled = false;
+        }
+    };
+
+    async function checkStatus() {
+        try {
+            const res = await fetch(`${API}/${episodeId}/status`);
+            const data = await res.json();
+
+            if (data.status === 'ready') {
+                el.statusText.textContent = '✅ Podcast Ready!';
+                el.progressBar.style.width = '100%';
+                loadPodcast();
+            } else if (data.status === 'error') {
+                el.statusText.textContent = '❌ Error: ' + data.stage;
+                el.uploadBtn.disabled = false;
+            } else {
+                el.statusText.textContent = '⚙️ ' + (data.stage || 'Processing...');
+                el.progressBar.style.width = '60%';
+                setTimeout(checkStatus, 1000);
+            }
+        } catch (error) {
+            setTimeout(checkStatus, 1000);
+        }
+    }
+
+    async function loadPodcast() {
+        try {
+            const res = await fetch(`${API}/${episodeId}/manifest`);
+            manifest = await res.json();
+
+            console.log('✅ Loaded manifest:', manifest.length, 'segments');
+
+            el.playerSection.classList.add('active');
+
+            if (manifest.length > 0) {
+                playSegment(0);
+                displayTranscript();
+
+                // Auto-play next segment when current ends
+                el.audioPlayer.addEventListener('ended', handleAudioEnded);
+            }
+
+            el.uploadBtn.disabled = false;
+        } catch (error) {
+            el.statusText.textContent = '❌ Error: ' + error.message;
+            console.error('Load error:', error);
+        }
+    }
+
+    function handleAudioEnded() {
+        console.log('Audio ended. Current index:', currentIndex, 'Total:', manifest.length);
+
+        // If we just finished playing an answer, don't auto-advance
+        if (isPlayingAnswer) {
+            console.log('Answer finished, staying at current position');
+            isPlayingAnswer = false;
+            return;
+        }
+
+        // Move to next segment
+        currentIndex++;
+        if (currentIndex < manifest.length) {
+            console.log('Playing next segment:', currentIndex);
+            playSegment(currentIndex);
+        } else {
+            console.log('Podcast finished!');
+            el.currentSpeaker.textContent = '🎉 Podcast Complete!';
+        }
+    }
+
+    function playSegment(index) {
+        if (index >= manifest.length) {
+            console.log('No more segments to play');
+            return;
+        }
+
+        const seg = manifest[index];
+        const audioUrl = `http://localhost:8000${seg.audio_url}`;
+
+        console.log(`▶️ Playing segment ${index}:`, seg.speaker);
+
+        el.audioPlayer.src = audioUrl;
+        el.audioPlayer.play().catch(err => {
+            console.error('Play error:', err);
+        });
+
+        el.currentSpeaker.textContent = `🎙️ ${seg.speaker}`;
+        currentIndex = index;
+        isPlayingAnswer = false;
+    }
+
+    function displayTranscript() {
+        el.transcript.innerHTML = manifest.map((seg, idx) => `
+            <div class="transcript-item ${seg.speaker === 'Student' ? 'student' : ''} ${seg.isQuestion ? 'question' : ''}">
+                <div class="speaker">${seg.isQuestion ? '❓' : (seg.speaker === 'Student' ? '👨‍🎓' : '👨‍🏫')} ${seg.speaker}</div>
+                <div>${seg.text}</div>
+            </div>
+        `).join('');
+    }
+
+    el.askBtn.onclick = async () => {
+        const question = el.questionInput.value.trim();
+        if (!question) {
+            alert('Please enter a question!');
+            return;
+        }
+
+        // Pause current playback
+        const wasPlaying = !el.audioPlayer.paused;
+        const currentTime = el.audioPlayer.currentTime;
+        el.audioPlayer.pause();
+
+        console.log('🤔 Asking question:', question);
+
+        el.askBtn.disabled = true;
+        el.askBtn.textContent = '🤔 Asking Ollama...';
+
+        try {
+            const res = await fetch(`${API}/${episodeId}/question`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question, timestamp: currentTime })
+            });
+
+            const data = await res.json();
+
+            console.log('✅ Got answer:', data.answer_text.substring(0, 50) + '...');
+
+            el.answerText.textContent = data.answer_text;
+            el.answerContainer.classList.add('active');
+            answerAudio = data.answer_audio_url;
+
+            // Add question and answer to transcript
+            manifest.splice(currentIndex + 1, 0,
+                { speaker: 'You', text: question, isQuestion: true },
+                { speaker: 'Tutor (Answer)', text: data.answer_text, isQuestion: true, audio_url: data.answer_audio_url }
+            );
+            displayTranscript();
+
+            el.questionInput.value = '';
+            el.askBtn.textContent = '🎤 Ask Question';
+            el.askBtn.disabled = false;
+
+            // Auto-play answer
+            setTimeout(() => {
+                playAnswer();
+            }, 500);
+
+        } catch (error) {
+            console.error('Question error:', error);
+            alert('Error: ' + error.message);
+            el.askBtn.textContent = '🎤 Ask Question';
+            el.askBtn.disabled = false;
+
+            // Resume if was playing
+            if (wasPlaying) {
+                el.audioPlayer.play();
+            }
+        }
+    };
+
+    function playAnswer() {
+        if (answerAudio) {
+            console.log('▶️ Playing answer');
+            isPlayingAnswer = true;
+            el.audioPlayer.src = `http://localhost:8000${answerAudio}`;
+            el.audioPlayer.play().catch(err => console.error('Answer play error:', err));
+            el.currentSpeaker.textContent = '🎙️ Tutor (Answer)';
+
+            // After answer finishes, continue podcast
+            el.audioPlayer.addEventListener('ended', function resumeAfterAnswer() {
+                console.log('Answer finished, resuming podcast');
+                isPlayingAnswer = false;
+                currentIndex++; // Move to next segment
+                if (currentIndex < manifest.length) {
+                    playSegment(currentIndex);
+                }
+                el.audioPlayer.removeEventListener('ended', resumeAfterAnswer);
+            }, { once: true });
+        }
+    }
+
+    el.playAnswerBtn.onclick = playAnswer;
+</script>
+```
+
+---
+
+## 🎯 What This Fixes:
+
+1. **✅ Continues playing after Q&A** - Uses `isPlayingAnswer` flag to track state
+2. **✅ Auto-plays answer** - Automatically plays answer audio after asking
+3. **✅ Resumes podcast** - Goes to next segment after answer finishes
+4. **✅ Better error handling** - Won't break if something fails
+5. **✅ Console logging** - Shows what's happening in browser console (F12)
+
+---
+
+## 🔍 Debug in Browser:
+
+Press **F12** → **Console** tab to see:
+```
+▶️ Playing segment 0: Tutor
+Audio ended. Current index: 0 Total: 10
+▶️ Playing segment 1: Student
+🤔 Asking question: Can you explain this?
+✅ Got answer: Great question! So basically...
+▶️ Playing answer
+Answer finished, resuming podcast
+▶️ Playing segment 2: Tutor
+</body>
+</html>
